@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Digital Footprint Report</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: #0a0e27;
+            color: #e2e8f0;
+            padding: 40px;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+            padding-bottom: 24px;
+            border-bottom: 2px solid #1e293b;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #f1f5f9;
+            margin-bottom: 8px;
+        }
+
+        .header .subtitle {
+            color: #94a3b8;
+            font-size: 11px;
+        }
+
+        {% if demo_mode %}
+        .demo-badge {
+            display: inline-block;
+            background: #f59e0b;
+            color: #0a0e27;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 10px;
+            margin-top: 8px;
+        }
+        {% endif %}
+
+        .score-section {
+            text-align: center;
+            margin: 32px 0;
+            padding: 24px;
+            background: #111827;
+            border-radius: 12px;
+            border: 1px solid #1e293b;
+        }
+
+        .score-number {
+            font-size: 48px;
+            font-weight: 700;
+            {% if score.risk_level == 'green' %}color: #22c55e;
+            {% elif score.risk_level == 'yellow' %}color: #f59e0b;
+            {% elif score.risk_level == 'orange' %}color: #f97316;
+            {% else %}color: #ef4444;{% endif %}
+        }
+
+        .score-label {
+            font-size: 16px;
+            font-weight: 600;
+            {% if score.risk_level == 'green' %}color: #22c55e;
+            {% elif score.risk_level == 'yellow' %}color: #f59e0b;
+            {% elif score.risk_level == 'orange' %}color: #f97316;
+            {% else %}color: #ef4444;{% endif %}
+            margin-top: 4px;
+        }
+
+        .score-out-of {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .section { margin: 24px 0; }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #f1f5f9;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #1e293b;
+        }
+
+        .breach-card {
+            background: #111827;
+            border: 1px solid #1e293b;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+
+        .breach-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .breach-name {
+            font-weight: 600;
+            font-size: 14px;
+            color: #f1f5f9;
+        }
+
+        .breach-date { color: #64748b; font-size: 11px; }
+
+        .severity-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .severity-critical { background: #7f1d1d; color: #fca5a5; }
+        .severity-high { background: #7c2d12; color: #fdba74; }
+        .severity-medium { background: #713f12; color: #fde047; }
+
+        .data-classes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin: 8px 0;
+        }
+
+        .data-chip {
+            background: #1e293b;
+            color: #94a3b8;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+        }
+
+        .explanation {
+            color: #94a3b8;
+            font-size: 11px;
+            margin-top: 8px;
+            font-style: italic;
+        }
+
+        .platform-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .platform-item {
+            background: #111827;
+            border: 1px solid #1e293b;
+            border-radius: 6px;
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-found { color: #22c55e; }
+        .status-not-found { color: #64748b; }
+        .status-error { color: #f59e0b; }
+
+        .action-list { list-style: none; }
+
+        .action-item {
+            background: #111827;
+            border: 1px solid #1e293b;
+            border-left: 3px solid #6366f1;
+            border-radius: 6px;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+        }
+
+        .action-priority {
+            display: inline-block;
+            background: #1e293b;
+            color: #6366f1;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            text-align: center;
+            font-size: 11px;
+            font-weight: 700;
+            line-height: 20px;
+            margin-right: 8px;
+        }
+
+        .action-text { font-weight: 500; color: #f1f5f9; }
+        .action-reason { color: #94a3b8; font-size: 11px; margin-top: 4px; margin-left: 28px; }
+
+        .footer {
+            text-align: center;
+            margin-top: 32px;
+            padding-top: 16px;
+            border-top: 1px solid #1e293b;
+            color: #64748b;
+            font-size: 10px;
+        }
+
+        .indian-badge {
+            display: inline-block;
+            background: #1e293b;
+            color: #f97316;
+            padding: 1px 6px;
+            border-radius: 3px;
+            font-size: 9px;
+            font-weight: 600;
+            margin-left: 6px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Digital Footprint Report</h1>
+        <div class="subtitle">Generated on {{ scan_timestamp }}</div>
+        {% if demo_mode %}
+        <div class="demo-badge">DEMO MODE -- Sample Data</div>
+        {% endif %}
+    </div>
+
+    <div class="score-section">
+        <div class="score-number">{{ score.score }}</div>
+        <div class="score-out-of">/ 100</div>
+        <div class="score-label">{{ score.risk_label }}</div>
+    </div>
+
+    {% if breaches %}
+    <div class="section">
+        <div class="section-title">Data Breaches Found ({{ breaches|length }})</div>
+        {% for breach in breaches %}
+        <div class="breach-card">
+            <div class="breach-header">
+                <span class="breach-name">{{ breach.name }}</span>
+                <span class="breach-date">{{ breach.breach_date }}</span>
+            </div>
+            <span class="severity-badge severity-{{ breach.severity }}">{{ breach.severity }}</span>
+            <div class="data-classes">
+                {% for dc in breach.data_classes %}
+                <span class="data-chip">{{ dc }}</span>
+                {% endfor %}
+            </div>
+            {% if breach.explanation %}
+            <div class="explanation">{{ breach.explanation }}</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if indian_breaches %}
+    <div class="section">
+        <div class="section-title">Indian Breach Reports ({{ indian_breaches|length }})</div>
+        {% for breach in indian_breaches %}
+        <div class="breach-card">
+            <div class="breach-header">
+                <span class="breach-name">{{ breach.name }} <span class="indian-badge">India</span></span>
+                <span class="breach-date">{{ breach.breach_date }}</span>
+            </div>
+            <span class="severity-badge severity-{{ breach.severity }}">{{ breach.severity }}</span>
+            <div class="data-classes">
+                {% for dc in breach.data_classes %}
+                <span class="data-chip">{{ dc }}</span>
+                {% endfor %}
+            </div>
+            {% if breach.explanation %}
+            <div class="explanation">{{ breach.explanation }}</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if platforms %}
+    <div class="section">
+        <div class="section-title">Social Platform Presence</div>
+        <div class="platform-grid">
+            {% for platform in platforms %}
+            <div class="platform-item">
+                <span>{{ platform.platform }}</span>
+                {% if platform.status == 'found' %}
+                <span class="status-found">Found</span>
+                {% elif platform.status == 'not_found' %}
+                <span class="status-not-found">Not found</span>
+                {% else %}
+                <span class="status-error">Unavailable</span>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if action_items %}
+    <div class="section">
+        <div class="section-title">Action Plan</div>
+        <ul class="action-list">
+            {% for action in action_items %}
+            <li class="action-item">
+                <span class="action-priority">{{ action.priority }}</span>
+                <span class="action-text">{{ action.action }}</span>
+                <div class="action-reason">{{ action.reason }}</div>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <div class="footer">
+        <p>{{ disclaimer }}</p>
+        <p style="margin-top: 4px;">Digital Footprint Checker — Protect your online identity</p>
+    </div>
+</body>
+</html>
